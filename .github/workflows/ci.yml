@@ -25,7 +25,7 @@ jobs:
         run: ruff check .
 
       - name: Type-check (mypy)
-        run: mypy spawn_airflow
+        run: mypy airflow_spawn
 
       - name: Test (pytest)
         run: pytest -q

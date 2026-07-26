@@ -1,4 +1,4 @@
-"""Example Airflow DAG using spawn-airflow's SpawnRunTaskOperator.
+"""Example Airflow DAG using airflow-spawn's SpawnRunTaskOperator.
 
 Each task runs its command on a purpose-sized, ephemeral EC2 instance that
 self-terminates. Drop this in your Airflow ``dags/`` folder (the `spawn` and
@@ -10,10 +10,10 @@ from __future__ import annotations
 import pendulum
 from airflow import DAG
 
-from spawn_airflow import SpawnRunTaskOperator
+from airflow_spawn import SpawnRunTaskOperator
 
 with DAG(
-    dag_id="spawn_airflow_example",
+    dag_id="airflow_spawn_example",
     schedule=None,
     start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
     catchup=False,

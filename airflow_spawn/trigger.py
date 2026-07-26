@@ -30,7 +30,7 @@ class SpawnTaskStatusTrigger(BaseTrigger):
 
     def serialize(self) -> tuple[str, dict[str, Any]]:
         return (
-            "spawn_airflow.trigger.SpawnTaskStatusTrigger",
+            "airflow_spawn.trigger.SpawnTaskStatusTrigger",
             {
                 "task_id": self.task_id,
                 "region": self.region,

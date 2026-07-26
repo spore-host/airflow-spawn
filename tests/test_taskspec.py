@@ -2,9 +2,9 @@
 
 import pytest
 
-from spawn_airflow import taskspec
+from airflow_spawn import taskspec
 
-JD = "/var/tmp/spawn_airflow_job"
+JD = "/var/tmp/airflow_spawn_job"
 
 
 def _spec(**over):

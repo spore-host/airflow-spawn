@@ -1,4 +1,4 @@
-# spawn-airflow
+# airflow-spawn
 
 The **ephemeral-EC2 operator for Apache Airflow** — run a task on a
 purpose-sized EC2 instance via [spore-host/spawn](https://github.com/spore-host/spawn)
@@ -16,7 +16,7 @@ worker slot per in-flight instance.
 ## Install
 
 ```bash
-pip install spawn-airflow
+pip install airflow-spawn
 ```
 
 Requires the `spawn` CLI on `PATH` (on the Airflow worker/triggerer) and AWS
@@ -26,7 +26,7 @@ CLI needed.
 ## Use
 
 ```python
-from spawn_airflow import SpawnRunTaskOperator
+from airflow_spawn import SpawnRunTaskOperator
 
 run = SpawnRunTaskOperator(
     task_id="align",

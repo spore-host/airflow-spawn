@@ -42,7 +42,7 @@ _NAME_SANITIZE = re.compile(r"[^a-z0-9-]+")
 # command as the instance's unprivileged login user (`su - <user>`), which cannot
 # create dirs under the root-owned `/mnt`. `/var/tmp` is world-writable (1777) and
 # disk-backed (not tmpfs, unlike `/tmp`).
-JOB_DIR = "/var/tmp/spawn_airflow_job"
+JOB_DIR = "/var/tmp/airflow_spawn_job"
 
 
 class SpawnRunTaskOperator(BaseOperator):
@@ -110,13 +110,13 @@ class SpawnRunTaskOperator(BaseOperator):
             on_complete="terminate",
         )
         with tempfile.NamedTemporaryFile(
-            "w", suffix=".json", prefix=f"spawn-airflow-{task_id}-", delete=False
+            "w", suffix=".json", prefix=f"airflow-spawn-{task_id}-", delete=False
         ) as fh:
             json.dump(spec, fh)
             spec_file = fh.name
 
         try:
-            self.log.info("spawn-airflow: dispatching %s via `spawn task run`", task_id)
+            self.log.info("airflow-spawn: dispatching %s via `spawn task run`", task_id)
             # Launch DETACHED (no --wait): spawn sizes, launches, and the instance
             # writes its own completion record. We poll/defer below.
             self._run_argv(
@@ -156,7 +156,7 @@ class SpawnRunTaskOperator(BaseOperator):
             rec = taskspec.parse_completion_record(out.stdout)
             return int(rec.get("exit_code", 1))
         except Exception:
-            self.log.warning("spawn-airflow: could not parse completion record for %s", task_id)
+            self.log.warning("airflow-spawn: could not parse completion record for %s", task_id)
             return 1
 
     def execute_complete(self, context: Any, event: Any) -> Any:
@@ -167,10 +167,10 @@ class SpawnRunTaskOperator(BaseOperator):
     def _finish(self, code: int) -> str:
         if code != 0:
             raise AirflowException(
-                f"spawn-airflow: task command exited with code {code} "
+                f"airflow-spawn: task command exited with code {code} "
                 f"(see {self.workdir_s3}/stdout.txt, /stderr.txt)"
             )
-        self.log.info("spawn-airflow: task succeeded; outputs under %s", self.workdir_s3)
+        self.log.info("airflow-spawn: task succeeded; outputs under %s", self.workdir_s3)
         return self.workdir_s3
 
     def on_kill(self) -> None:

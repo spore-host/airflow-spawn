@@ -1,4 +1,4 @@
-# CLAUDE.md — spawn-airflow
+# CLAUDE.md — airflow-spawn
 
 An **Apache Airflow operator** that runs a task on an ephemeral EC2 instance via
 [spore-host/spawn](https://github.com/spore-host/spawn). The Airflow sibling of
@@ -25,7 +25,7 @@ plus AWS credentials, for real runs.
 
 - `pip install -e ".[dev]"` — install with dev deps
 - `pytest` — pure-function + operator/trigger unit tests (no AWS, no scheduler)
-- `ruff check .` && `mypy spawn_airflow` — lint + type-check
+- `ruff check .` && `mypy airflow_spawn` — lint + type-check
 
 ## Architecture — Operator, NOT Executor
 

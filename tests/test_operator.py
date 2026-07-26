@@ -5,7 +5,7 @@ import asyncio
 import pytest
 from airflow.exceptions import AirflowException
 
-from spawn_airflow import SpawnRunTaskOperator, SpawnTaskStatusTrigger
+from airflow_spawn import SpawnRunTaskOperator, SpawnTaskStatusTrigger
 
 
 class FakeCompleted:

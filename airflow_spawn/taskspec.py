@@ -1,6 +1,6 @@
 """Build a spawn TaskSpec for an Airflow task and parse its CompletionRecord.
 
-spawn-airflow no longer orchestrates launch/staging/completion itself — it shells
+airflow-spawn no longer orchestrates launch/staging/completion itself — it shells
 out to ``spawn task run``, which owns S3 staging, the container run, sizing
 (truffle), the scoped IAM profile, and the durable completion record. This module
 is the translation layer: it maps the operator's ``command`` + resources to the
