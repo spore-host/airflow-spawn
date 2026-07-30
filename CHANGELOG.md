@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Engine-composition CI test** (`tests/composition/`, `.github/workflows/composition-test.yml`):
+  runs the **real `SpawnRunTaskOperator.execute()`** against the
+  [Substrate](https://github.com/scttfrdmn/substrate) AWS emulator — no real AWS,
+  no cost. Exercises the full seam (operator → real `spawn task run` + real
+  `aws s3` staging vs. Substrate → completion record → exit code → return on
+  success / `AirflowException` on failure), asserting both the happy path
+  (unseeded ⇒ nominal success) and the failure path (a seeded nonzero completion,
+  via substrate#360's `POST /v1/spawn/task-completion`, ⇒ the operator raises).
+
 ## [0.3.0] - 2026-07-25
 
 ### Changed
