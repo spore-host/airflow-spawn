@@ -26,7 +26,6 @@ from __future__ import annotations
 import json
 import re
 import shlex
-from typing import Optional
 
 # Family prefix of an instance type, e.g. "c7i" from "c7i.4xlarge".
 _FAMILY_RE = re.compile(r"^([a-z][a-z0-9]*?[0-9]+[a-z]*)\.")
@@ -52,7 +51,7 @@ def build_command_string(command: str, job_dir: str) -> str:
     )
 
 
-def instance_type_family(instance_type: Optional[str]) -> Optional[str]:
+def instance_type_family(instance_type: str | None) -> str | None:
     """Extract the family prefix from an instance type ("c7i" from "c7i.4xlarge"),
     or None. Maps the operator's ``instance_type`` onto TaskSpec
     ``resources.families`` — spawn has no exact instance-type pin, so it steers
@@ -70,9 +69,9 @@ def build_task_spec(
     command: str,
     job_dir: str,
     workdir_s3: str,
-    cpus: Optional[int] = None,
-    memory_gib: Optional[float] = None,
-    instance_hint: Optional[str] = None,
+    cpus: int | None = None,
+    memory_gib: float | None = None,
+    instance_hint: str | None = None,
     spot: bool = False,
     ttl: str = "4h",
     on_complete: str = "terminate",
@@ -117,7 +116,7 @@ def build_task_spec(
 
 # ---- completion, from `spawn task status --check-complete` / -o json ----------
 
-def check_complete_to_status(returncode: int) -> Optional[str]:
+def check_complete_to_status(returncode: int) -> str | None:
     """Map ``spawn task status --check-complete`` exit code to a status.
 
     spawn's contract: 0=completed, 1=failed, 2=running, 3=error. Returns
