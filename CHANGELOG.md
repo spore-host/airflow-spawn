@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **CI is green again, and no longer silently redefines what it enforces.** Two
+  failures were latent on `main` — the second hidden behind the first, since the
+  lint step aborts the job before the tests run:
+  - `ruff check .` went red with no change on our side. ruff 0.16 moved a large
+    set of opinionated rules (`BLE`, `PLW`, `TRY`, `C408`, `EXE`, `B017`, …) into
+    its **default** rule set, and `ruff>=0.5` was unpinned, so CI adopted 26 new
+    violations the moment ruff published. `ruff` is now capped `<0.16` (matching
+    `snakemake-executor-plugin-spawn`); adopting those rules should be a
+    deliberate change via an explicit `select`, not something a release does to us.
+  - `pytest -q` failed at **collection**, not on a test. The engine-composition
+    script is named `composition_test.py`, which matches pytest's default
+    `*_test.py` discovery, so a bare `pytest -q` imported it and died on
+    `os.environ["AWS_ENDPOINT_URL"]` — and a collection error fails the entire run
+    rather than skipping one test. Discovery is now scoped to the unit tests. The
+    composition workflow is unaffected: it invokes the script directly with
+    `python tests/composition/composition_test.py`.
+
+### Changed
+- Modernized type annotations in `operator.py`, `taskspec.py` and `trigger.py` to
+  the idioms ruff's `UP` rules prefer: `X | None` instead of `Optional[X]`,
+  `Sequence`/`AsyncIterator` imported from `collections.abc` instead of `typing`,
+  and an unnecessary string annotation unquoted. Behaviour is unchanged: `X | None`
+  and the `collections.abc` generics both evaluate at runtime on this package's
+  floor (3.10+), so they stay safe for the annotations Airflow introspects
+  regardless of `from __future__ import annotations`.
+
 ### Added
 - **Engine-composition CI test** (`tests/composition/`, `.github/workflows/composition-test.yml`):
   runs the **real `SpawnRunTaskOperator.execute()`** against the
