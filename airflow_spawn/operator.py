@@ -22,8 +22,9 @@ import re
 import subprocess
 import tempfile
 import time
+from collections.abc import Sequence
 from datetime import timedelta
-from typing import Any, Optional, Sequence
+from typing import Any
 
 from airflow.configuration import conf
 from airflow.exceptions import AirflowException
@@ -58,9 +59,9 @@ class SpawnRunTaskOperator(BaseOperator):
         workdir_s3: str,
         region: str = "us-east-1",
         ttl: str = "4h",
-        instance_type: Optional[str] = None,
-        cpus: Optional[int] = None,
-        memory_gib: Optional[float] = None,
+        instance_type: str | None = None,
+        cpus: int | None = None,
+        memory_gib: float | None = None,
         spot: bool = False,
         poll_interval: float = 15.0,
         deferrable: bool = conf.getboolean(
@@ -79,7 +80,7 @@ class SpawnRunTaskOperator(BaseOperator):
         self.spot = spot
         self.poll_interval = poll_interval
         self.deferrable = deferrable
-        self._task_id: Optional[str] = None
+        self._task_id: str | None = None
 
     # ---- helpers ---------------------------------------------------------
 
@@ -88,7 +89,7 @@ class SpawnRunTaskOperator(BaseOperator):
         raw = f"af-{self.task_id}-{getattr(ti, 'try_number', 1) if ti else 1}"
         return _NAME_SANITIZE.sub("-", raw.lower()).strip("-")[:60] or "af-task"
 
-    def _run_argv(self, argv: list[str], check: bool) -> "subprocess.CompletedProcess[str]":
+    def _run_argv(self, argv: list[str], check: bool) -> subprocess.CompletedProcess[str]:
         return subprocess.run(argv, check=check, capture_output=True, text=True)
 
     # ---- the seam --------------------------------------------------------
