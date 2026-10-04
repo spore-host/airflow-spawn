@@ -49,7 +49,11 @@ JOB_DIR = "/var/tmp/airflow_spawn_job"
 class SpawnRunTaskOperator(BaseOperator):
     """Run ``command`` on an ephemeral EC2 instance sized/launched via spawn."""
 
-    template_fields: Sequence[str] = ("command", "workdir_s3")
+    # container and cost_limit are templatable: an image ref commonly comes from a
+    # Variable or a DAG param, and a cost cap may be environment-dependent. Note a
+    # rendered template is always a STRING, which is why _lifecycle coerces rather
+    # than assuming a float (#12/#13).
+    template_fields: Sequence[str] = ("command", "workdir_s3", "container", "cost_limit")
     ui_color = "#5b8a72"
 
     def __init__(
@@ -59,6 +63,8 @@ class SpawnRunTaskOperator(BaseOperator):
         workdir_s3: str,
         region: str = "us-east-1",
         ttl: str = "4h",
+        cost_limit: float | None = None,
+        container: str | None = None,
         instance_type: str | None = None,
         cpus: int | None = None,
         memory_gib: float | None = None,
@@ -74,6 +80,8 @@ class SpawnRunTaskOperator(BaseOperator):
         self.workdir_s3 = workdir_s3
         self.region = region
         self.ttl = ttl
+        self.cost_limit = cost_limit
+        self.container = container
         self.instance_type = instance_type
         self.cpus = cpus
         self.memory_gib = memory_gib
@@ -109,6 +117,8 @@ class SpawnRunTaskOperator(BaseOperator):
             spot=self.spot,
             ttl=self.ttl,
             on_complete="terminate",
+            cost_limit=self.cost_limit,
+            container=self.container,
         )
         with tempfile.NamedTemporaryFile(
             "w", suffix=".json", prefix=f"airflow-spawn-{task_id}-", delete=False
