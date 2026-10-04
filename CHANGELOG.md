@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`cost_limit` on `SpawnRunTaskOperator`: a per-task spend cap** (#12). TTL was the only
+  ceiling on a task, defaulting to 4h, so a DAG fanning out N tasks had a worst case of
+  N × 4h × the instance rate with no second belt. `spored` enforces TTL and cost
+  **independently** — first limit to fire wins — so this is a genuine second limit. The
+  failure it catches is a task that **hangs** rather than fails: it produces no error for
+  Airflow to retry or fail on, so it bills until the TTL expires. Emitted only when set.
+  (`--cost-limit` became a compute **+ storage** total in spawn 0.116.0.)
+- **`container` on `SpawnRunTaskOperator`: run the task in an image** (#13). Previously
+  the task ran on a bare AL2023 host, so the tool had to already be present or be
+  installed by the command itself — rebuilding what spawn's container path already does
+  (Docker installed on demand, digest pull, private-ECR auth, GPU flags). It also meant a
+  run's software wasn't identified anywhere, so the run wasn't reproducible even in
+  principle. airflow-spawn was the only adapter with neither the field nor a knob for it;
+  `miniwdl-spawn` and `cwl-spawn` pass their `DockerRequirement` through and `nf-spawn`
+  reads Nextflow's `task.container`. Airflow has no universal per-task image directive,
+  so this is an explicit operator argument rather than inference.
+  Both are in `template_fields`, so an image ref can come from a Variable or DAG param.
+  A rendered Jinja template is always a **string**, which is why `cost_limit` is coerced
+  rather than assumed numeric — and a template that renders to junk degrades to "bounded
+  by TTL only" with a warning instead of failing the task at submit time.
+
+### Added
 - CI workflow to publish `airflow-spawn` to PyPI on a `python-vX.Y.Z` tag, via
   PyPI Trusted Publishing (OIDC, no stored API token) in a dedicated `pypi`
   GitHub environment — the same mechanism `python-sdk` already uses. The

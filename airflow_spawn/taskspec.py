@@ -24,6 +24,7 @@ runs the command in a job dir and syncs that dir back so ``stdout.txt`` /
 from __future__ import annotations
 
 import json
+import logging
 import re
 import shlex
 
@@ -63,6 +64,37 @@ def instance_type_family(instance_type: str | None) -> str | None:
     return m.group(1) if m else None
 
 
+def _lifecycle(ttl: str, on_complete: str, cost_limit: float | None) -> dict:
+    """The lifecycle block, with cost_limit included only when set (#12).
+
+    TTL bounds a task in TIME, not money, and spored enforces the two
+    INDEPENDENTLY — first limit to fire wins — so a cost cap is a genuine second
+    belt. Without it the only ceiling is the TTL, defaulting to 4h, so a DAG
+    fanning out N tasks has a worst case of N x 4h x the instance rate.
+
+    The failure it catches is a task that HANGS rather than fails: it produces no
+    error for Airflow to retry or fail on, so it bills until the TTL expires.
+    Omitted when unset so spawn's own default still applies.
+    """
+    lifecycle: dict = {"ttl": ttl, "on_complete": on_complete}
+    if cost_limit is None or cost_limit == "":
+        return lifecycle
+    try:
+        value = float(cost_limit)
+    except (TypeError, ValueError):
+        # cost_limit is a template_field, so a rendered Jinja expression arrives as
+        # a string and a bad one must not fail the task at submit time. Degrade to
+        # "bounded by TTL only" — the previous behaviour — with a warning.
+        logging.getLogger("airflow.task").warning(
+            "airflow-spawn: ignoring non-numeric cost_limit %r; "
+            "the task will be bounded by TTL only", cost_limit
+        )
+        return lifecycle
+    if value > 0:
+        lifecycle["cost_limit"] = value
+    return lifecycle
+
+
 def build_task_spec(
     *,
     task_id: str,
@@ -75,6 +107,8 @@ def build_task_spec(
     spot: bool = False,
     ttl: str = "4h",
     on_complete: str = "terminate",
+    cost_limit: float | None = None,
+    container: str | None = None,
 ) -> dict:
     """Build the TaskSpec dict for one Airflow task. Pure.
 
@@ -109,8 +143,17 @@ def build_task_spec(
         # stdout/stderr and any outputs land under workdir_s3. Trailing slash on
         # the source ⇒ recursive.
         "outputs": [{"source": jd + "/", "destination": work_dst}],
-        "lifecycle": {"ttl": ttl, "on_complete": on_complete},
+        "lifecycle": _lifecycle(ttl, on_complete, cost_limit),
     }
+
+    # spec.container routes the task through spawn's existing container path —
+    # Docker installed on demand, digest pull, private-ECR auth, GPU flags —
+    # instead of a bare AL2023 host where the tool has to already be present
+    # (#13). Airflow has no universal per-task image directive the way Nextflow
+    # and WDL/CWL do, so this comes from an explicit operator argument. It is also
+    # what makes a run's software identifiable, hence reproducible.
+    if container and container.strip():
+        spec["container"] = container.strip()
     return spec
 
 
