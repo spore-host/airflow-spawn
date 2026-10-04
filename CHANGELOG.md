@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-04
+
 ### Added
 - **`cost_limit` on `SpawnRunTaskOperator`: a per-task spend cap** (#12). TTL was the only
   ceiling on a task, defaulting to 4h, so a DAG fanning out N tasks had a worst case of
